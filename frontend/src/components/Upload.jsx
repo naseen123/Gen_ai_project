@@ -91,8 +91,19 @@ export default function Upload({ onSuccess }) {
       const analysis = await analyzeRes.json()
       setStage(3)
 
+      // Stage 3: Build AI RAG Index
+      const initRes = await fetch('http://localhost:8000/init-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ parsed_chat: parsed, analysis: analysis }),
+      })
+      if (!initRes.ok) {
+        console.error('Failed to init AI session, but continuing anyway');
+      }
+      const initData = await initRes.ok ? await initRes.json() : { session_id: null };
+
       await new Promise(r => setTimeout(r, 500))
-      onSuccess(parsed, analysis)
+      onSuccess(parsed, analysis, initData.session_id)
     } catch (err) {
       setError(err.message)
       setLoading(false)

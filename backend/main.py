@@ -11,6 +11,7 @@ load_dotenv()
 # Import parser and analyzer modules
 from chat_parser import parse_whatsapp_chat
 from analyzer import analyze_chat
+from api.chat import router as chat_router
 
 app = FastAPI(
     title="TeamLens API",
@@ -21,11 +22,14 @@ app = FastAPI(
 # Set up CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Register AI chat endpoints
+app.include_router(chat_router)
 
 @app.get("/health", tags=["Health"])
 async def health_check():

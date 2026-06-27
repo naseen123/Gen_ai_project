@@ -30,10 +30,12 @@ export default function NetworkGraph({ parsedData, members }) {
       score: m.overall_score ?? 5,
     }))
 
+    const nodeIds = new Set(nodes.map(n => n.id))
+
     const links = Object.entries(edgeMap).map(([key, count]) => {
       const [source, target] = key.split('|||')
       return { source, target, count }
-    })
+    }).filter(l => nodeIds.has(l.source) && nodeIds.has(l.target))
 
     const maxCount = Math.max(...links.map(l => l.count), 1)
 

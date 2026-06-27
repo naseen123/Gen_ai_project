@@ -97,25 +97,42 @@ def calculate_quality_score(message: str) -> int:
     Calculates quality score from 0 to 10 based on:
     - Length (1 pt per 5 words, max 4)
     - Task Keywords (+3 pts)
-    - Spam Penalty (-3 pts)
+    - Spam Penalty (-3 pts for purely low-value messages)
+    
+    Uses word-boundary regex to avoid false positives
+    (e.g. "measure" should NOT trigger the "sure" spam penalty).
+    Penalty only applies if the message is short AND matches spam words.
     """
+    import re
     msg_lower = message.lower()
     words = msg_lower.split()
     word_count = len(words)
-    
+
     # Length score
     length_score = min(4, word_count // 5)
-    
-    # Keywords check
-    task_keywords = ["done", "finished", "pushed", "here", "will do", "i'll", "completed"]
+
+    # Task keywords check — plain substring is fine here (directional phrases)
+    task_keywords = [
+        "done", "finished", "pushed", "completed", "submitted",
+        "will do", "i'll", "i will", "here is", "here's", "sent",
+        "updated", "fixed", "resolved", "deployed", "uploaded",
+        "attached", "added", "working on", "just did", "just sent",
+    ]
     has_keyword = any(kw in msg_lower for kw in task_keywords)
     keyword_bonus = 3 if has_keyword else 0
-    
-    # Spam check
-    spam_words = ["ok", "sure", "lol", "haha", "thanks", "thx"]
-    has_spam = any(kw in msg_lower for kw in spam_words)
-    spam_penalty = -3 if has_spam else 0
-    
+
+    # Spam check — use \b word boundaries to avoid false positives
+    spam_words = [
+        r"\bok\b", r"\bk\b", r"\bsure\b", r"\blol\b", r"\bhaha\b",
+        r"\bthanks\b", r"\bthx\b", r"\bnoted\b", r"\bnp\b",
+        r"\bcool\b", r"\bhmm\b", r"\byep\b", r"\byup\b",
+        r"\bokay\b", r"\balright\b", r"\bya\b", r"\byah\b",
+    ]
+    has_spam = any(re.search(pattern, msg_lower) for pattern in spam_words)
+    # Only penalize if the message is short (≤ 5 words) — a long message
+    # containing "thanks" likely has real content too.
+    spam_penalty = -3 if (has_spam and word_count <= 5) else 0
+
     score = length_score + keyword_bonus + spam_penalty
     return max(0, min(10, score))
 

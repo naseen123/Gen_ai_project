@@ -1,6 +1,6 @@
 import MemberCard from './MemberCard'
 
-export default function Leaderboard({ members, onSelectMember, selectedMember }) {
+export default function Leaderboard({ members, onSelectMember, selectedMember, messageCounts }) {
   const sorted = [...members].sort((a, b) => (b.overall_score ?? 0) - (a.overall_score ?? 0))
 
   return (
@@ -13,6 +13,7 @@ export default function Leaderboard({ members, onSelectMember, selectedMember })
           rank={i + 1}
           selected={selectedMember?.name === member.name}
           onClick={onSelectMember}
+          messageCount={messageCounts?.[member.name]}
         />
       ))}
     </div>
